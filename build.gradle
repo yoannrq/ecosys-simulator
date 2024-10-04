@@ -1,0 +1,31 @@
+plugins {
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.thymeleaf:thymeleaf:3.1.2.RELEASE'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+application {
+    mainClass = 'org.ecosyssimulator.Main'
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'org.ecosyssimulator.Main'
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}

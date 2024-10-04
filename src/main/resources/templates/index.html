@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur d'Écosystème - Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .main-content {
+            flex: 1;
+        }
+
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .panel {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 15px;
+            flex: 1 1 300px;
+            min-width: 300px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .organisms-panel {
+            height: 40vh;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin-right: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .species-table-container {
+            max-height: 30vh;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .events-panel {
+            margin-top: auto;
+            width: 100%;
+        }
+
+        .controls-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .controls button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .controls button:hover {
+            background-color: #45a049;
+        }
+
+        .add-organism-form {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .add-organism-form select {
+            padding: 5px;
+        }
+
+        .terminal {
+            background-color: #000;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .terminal ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .terminal li {
+            padding: 5px 0;
+        }
+
+        .terminal li::before {
+            content: '> ';
+            color: #00ff00;
+        }
+
+        h1, h2 {
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+<h1>Simulateur d'Écosystème - Dashboard</h1>
+
+<div class="main-content">
+    <div class="dashboard">
+        <div class="panel">
+            <h2>État de l'Écosystème</h2>
+            <p>Jour actuel: <span th:text="${currentDay}">0</span></p>
+            <p>Population totale: <span th:text="${totalPopulation}">0</span></p>
+        </div>
+
+        <div class="panel organisms-panel">
+            <h2>Liste des organismes</h2>
+            <div class="species-table-container">
+                <table>
+                    <tr>
+                        <th>/</th>
+                        <th>Espèce</th>
+                        <th>Âge</th>
+                        <th>Taille</th>
+                    </tr>
+                    <tr th:each="species : ${speciesStats}">
+                        <td th:text="${species.emoticon}">Emoticon de l'espèce</td>
+                        <td th:text="${species.species}">Nom de l'espèce</td>
+                        <td th:text="${species.age}">Âge de l'espèce</td>
+                        <td th:text="${#numbers.formatDecimal(species.size, 1, 2)}">0.0</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls-container">
+        <h2>Contrôles de Simulation</h2>
+        <div class="controls">
+            <button onclick="simulateDay()">Simuler un jour</button>
+            <button onclick="simulateMonth()">Simuler un mois</button>
+            <button onclick="resetSimulation()">Réinitialiser la simulation</button>
+        </div>
+    </div>
+    <div class="add-organism-form">
+        <select id="organismSelect">
+            <option value="LOUP">Loup</option>
+            <option value="RENARD">Renard</option>
+            <option value="LAPIN">Lapin</option>
+            <option value="CAROTTE">Carotte</option>
+        </select>
+        <button onclick="addOrganism()">Ajouter un organisme</button>
+    </div>
+</div>
+
+<div class="panel events-panel">
+    <h2>Journal des Événements</h2>
+    <div class="terminal" id="terminalContainer">
+        <ul id="eventList">
+            <li th:each="event : ${eventsList}" th:text="${event}">Événement</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    function scrollToBottom() {
+        const terminal = document.querySelector('.terminal');
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function simulateDay() {
+        fetch('/simulate-day', { method: 'POST' })
+            .then(response => response.text())
+            .then(html => {
+                document.body.innerHTML = html;
+                scrollToBottom();
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function simulateMonth() {
+        fetch('/simulate-month', { method: 'POST' })
+            .then(response => response.text())
+            .then(html => {
+                document.body.innerHTML = html;
+                scrollToBottom();
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function resetSimulation() {
+        fetch('/reset', { method: 'POST' })
+            .then(response => response.text())
+            .then(html => {
+                document.body.innerHTML = html;
+                scrollToBottom();
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function addOrganism() {
+        const select = document.getElementById('organismSelect');
+        const species = select.value;
+        fetch('/add-organism', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'species=' + encodeURIComponent(species)
+        })
+            .then(response => response.text())
+            .then(html => {
+                document.body.innerHTML = html;
+                scrollToBottom();
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    window.onload = scrollToBottom;
+</script>
+</body>
+</html>
