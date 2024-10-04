@@ -1,5 +1,5 @@
 FROM gradle:jdk21
-WORKDIR /app
+WORKDIR /
 COPY . .
-RUN cd app && gradle build
+RUN gradle build
 CMD ["java", "-cp", "build/libs/app.jar", "org.ecosyssimulator.Main"]
