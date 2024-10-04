@@ -17,7 +17,7 @@ java {
 }
 
 application {
-    mainClass = 'org.ecosyssimulator.Main'
+    mainClassName = 'org.ecosyssimulator.Main'
 }
 
 jar {
