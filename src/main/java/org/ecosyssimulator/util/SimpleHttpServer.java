@@ -54,6 +54,10 @@ public class SimpleHttpServer {
 
     private static void sendResponse(HttpExchange httpExchange, String response) throws IOException {
         try {
+            httpExchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
+            httpExchange.getResponseHeaders().set("X-Content-Type-Options", "nosniff");
+            httpExchange.getResponseHeaders().set("Cache-Control", "no-cache");
+
             byte[] responseBytes = response.getBytes(StandardCharsets.UTF_8);
             httpExchange.sendResponseHeaders(200, responseBytes.length);
             try (OutputStream os = httpExchange.getResponseBody()) {
@@ -64,6 +68,7 @@ public class SimpleHttpServer {
         } catch (Exception except) {
             except.printStackTrace();
             String errorMessage = "Error: " + except.getMessage();
+            httpExchange.getResponseHeaders().set("Content-Type", "text/plain; charset=UTF-8");
             byte[] errorBytes = errorMessage.getBytes(StandardCharsets.UTF_8);
             httpExchange.sendResponseHeaders(500, errorBytes.length);
             try (OutputStream os = httpExchange.getResponseBody()) {
@@ -124,7 +129,7 @@ public class SimpleHttpServer {
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
             if ("POST".equals(httpExchange.getRequestMethod())) {
-                InputStreamReader isr = new InputStreamReader(httpExchange.getRequestBody(), "UTF-8");
+                InputStreamReader isr = new InputStreamReader(httpExchange.getRequestBody(), StandardCharsets.UTF_8);
                 BufferedReader br = new BufferedReader(isr);
                 String formData = br.readLine();
 
